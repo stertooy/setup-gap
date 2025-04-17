@@ -77,19 +77,25 @@ runs:
         shell: bash
         run: |
           cd $HOME/gap
-
           # download packages; instruct wget to retry several times if the
           # connection is refused, to work around intermittent failures.
           # for older versions, set WGET, for GAP >= 4.11 set DOWNLOAD
           WGET="wget -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused"
           
           if [[ "${{ env.IS_TAG }}" == "true" ]] ; then
-            if [[ "${{ inputs.GAP_BOOTSTRAP }}" == "minimal" ]] ; then
-              MINIMAL="-required"
-            fi
             echo "ITS A TAG"
-            URL=https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/
-            FILE=packages$MINIMAL-${{ env.VERSION }}.tar.gz
+            if [[ "${{ inputs.GAP_BOOTSTRAP }}" == "minimal" ]] ; then
+              BOOTSTRAP="-required"
+            fi
+            VER=${{ env.VERSION }}
+            if [[ $(echo -e "${VERr#v}\n4.11.1" | sort -V | head -n1) == "4.11.1" ]] ; then
+              echo "$VER is at least GAP version 4.11.1, use GitHub URL"
+              URL=https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/
+            else
+              echo "$VER is older than GAP version 4.11.1, use GAP URL"
+              URL=https://files.gap-system.org/gap4pkgs/
+            fi
+            FILE=packages$BOOTSTRAP-${{ env.VERSION }}.tar.gz
             $WGET $URL$FILE
             mkdir pkg
             tar xzf $FILE -C pkg
