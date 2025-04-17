@@ -13,7 +13,7 @@ env:
 
 jobs:
   test:
-    name: ${{ matrix.gap-branch }} ${{ matrix.ABI }} - Packages ${{ matrix.GAP_PKGS_TO_BUILD }} - HPCGAP ${{ matrix.HPCGAP }} - ${{ matrix.os }}
+    name: ${{ matrix.gap-branch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -21,25 +21,9 @@ jobs:
         os: [ubuntu-latest]
         gap-branch:
           - master
-        ABI: ['']
-        GAP_PKGS_TO_BUILD:
-          - ''
-          - 'default'
-        HPCGAP: ['no']
-        include:
-          - os: ubuntu-latest
-            gap-branch: master
-            GAP_PKGS_TO_BUILD: ''
-            HPCGAP: yes
-          - os: ubuntu-latest
-            gap-branch: master
-            ABI: 32
-            GAP_PKGS_TO_BUILD: 'default'
-            HPCGAP: no
-          - os: macos-latest
-            gap-branch: master
-            GAP_PKGS_TO_BUILD: ''
-            HPCGAP: no
+          - 4.14.0
+          - default
+          - latest
 
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +31,4 @@ jobs:
         uses: gap-actions/setup-cygwin@v1
       - uses: ./
         with:
-          GAPBRANCH: ${{ matrix.gap-branch }}
-          ABI: ${{ matrix.ABI }}
-          GAP_PKGS_TO_BUILD: ${{ matrix.GAP_PKGS_TO_BUILD }}
-          HPCGAP: ${{ matrix.HPCGAP }}
+          GAP_VERSION: ${{ matrix.gap-branch }}
