@@ -36,14 +36,14 @@ runs:
           GIT_BRANCHES=$(git ls-remote --heads https://github.com/gap-system/gap.git | sed 's|.*refs/heads/||')
           LATEST_TAG=$(echo "$GIT_TAGS" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
           DEFAULT_BRANCH=$(git ls-remote --symref https://github.com/gap-system/gap.git HEAD | head -n 1 | sed 's|ref: refs/heads/||; s|\tHEAD||')
-          if [[ "$GAP_VERSION" == "latest" ]] ; then
+          if [[ "${{ inputs.GAP_VERSION }}" == "latest" ]] ; then
             VERSION=$LATEST_TAG
-          elif [[ "$GAP_VERSION" == "default" ]] ; then
+          elif [[ "${{ inputs.GAP_VERSION }}" == "default" ]] ; then
             VERSION=$DEFAULT_BRANCH
-          elif echo "$GIT_BRANCHES" | grep -qx "$GAP_VERSION" || echo "$GIT_TAGS" | grep -qx "$GAP_VERSION" ; then
-            VERSION=$GAP_VERSION
-          elif echo "$GIT_TAGS" | grep -qx "v$VERSION" ; then
-            VERSION=v$GAP_VERSION
+          elif echo "$GIT_BRANCHES" | grep -qx "${{ inputs.GAP_VERSION }}" || echo "$GIT_TAGS" | grep -qx "${{ inputs.GAP_VERSION }}" ; then
+            VERSION=${{ inputs.GAP_VERSION }}
+          elif echo "$GIT_TAGS" | grep -qx "v${{ inputs.GAP_VERSION }}" ; then
+            VERSION=v${{ inputs.GAP_VERSION }}
           else
             echo "No branch or tag with name $GAP_VERSION found"
             exit 1
