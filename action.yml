@@ -65,12 +65,18 @@ runs:
           CONFIGFLAGS="${{ inputs.CONFIGFLAGS }}"
 
           # build GAP in a subdirectory
-          ./autogen.sh
+          if [ -f "autogen.sh" ] ; then
+            ./autogen.sh
+          fi
           ./configure $CONFIGFLAGS
           make -j4 V=1
 
           # make it available
-          ln -s $HOME/gap/gap /usr/local/bin/gap
+          if [ -f "$HOME/gap/gap" ] ; then
+            ln -s $HOME/gap/gap /usr/local/bin/gap
+          else
+            echo -e '#!/bin/sh\nsh '"$HOME"'/gap/bin/gap.sh "$@"\n' > /usr/local/bin/gap
+          fi
           chmod +x /usr/local/bin/gap
 
       - name: "Download packages"
@@ -107,4 +113,4 @@ runs:
       - name: "Quick test"
         shell: bash
         run: |
-          gap -c "LoadAllPackages();QuitGap();"
+          gap -A -c "LoadAllPackages();QuitGap();"
