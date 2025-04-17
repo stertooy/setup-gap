@@ -33,27 +33,45 @@ runs:
         shell: bash
         run: |
           VERSION=""
-          IS_TAG=true
+          IS_BRANCH=false
+
+          # Get all tags and branches
           GIT_TAGS=$(git ls-remote --tags --refs https://github.com/gap-system/gap.git | sed 's|.*refs/tags/||')
           GIT_BRANCHES=$(git ls-remote --heads https://github.com/gap-system/gap.git | sed 's|.*refs/heads/||')
-          LATEST_TAG=$(echo "$GIT_TAGS" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
-          DEFAULT_BRANCH=$(git ls-remote --symref https://github.com/gap-system/gap.git HEAD | head -n 1 | sed 's|ref: refs/heads/||; s|\tHEAD||')
+
+          # Filter tags that should correspond to releases and sort
+          GIT_RELEASES=$(echo "$GIT_TAGS" | egrep '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
+
           if [[ "${{ inputs.GAP_VERSION }}" == "latest" ]] ; then
-            VERSION=$LATEST_TAG
-          elif echo "$GIT_TAGS" | grep -qx "${{ inputs.GAP_VERSION }}" ; then
-            VERSION=${{ inputs.GAP_VERSION }}
-          elif echo "$GIT_TAGS" | grep -qx "v${{ inputs.GAP_VERSION }}" ; then
-            VERSION=v${{ inputs.GAP_VERSION }}
-          elif [[ "${{ inputs.GAP_VERSION }}" == "default" ]] ; then
-            VERSION=$DEFAULT_BRANCH
-            IS_TAG=false
+            # Get tag of latest release
+            VERSION=$(echo "$GIT_RELEASES" | tail -n 1)
+          elif [[ "${{ inputs.GAP_VERSION }}" =~ ^(master|main|default)$ ]] ; then
+            # Get default branch from git
+            VERSION=$(git ls-remote --symref https://github.com/gap-system/gap.git HEAD | head -n 1 | sed 's|ref: refs/heads/||; s|\tHEAD||')
+            IS_BRANCH=true
           elif echo "$GIT_BRANCHES" | grep -qx "${{ inputs.GAP_VERSION }}" ; then
+            # Exact branch match
             VERSION=${{ inputs.GAP_VERSION }}
-            IS_TAG=false
+            IS_BRANCH=true
           else
+            # We now try to match with tags
+            # Add "v" in front if missing
+            TAG=${{ inputs.GAP_VERSION }}
+            TAG=v${TAG#v}
+            if echo "$GIT_TAGS" | grep -qx "$TAG" ; then
+              # Exact tag match!
+              VERSION=$TAG
+            else
+              # Expand tag to latest release
+              VERSION=$(echo "$GIT_RELEASES" | grep "^$TAG\." | tail -n 1)
+            fi
+          fi
+            
+          if [ -z $VERSION ] ; then
             echo "No branch or tag with name $GAP_VERSION found"
             exit 1
           fi
+          
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "IS_TAG=$IS_TAG" >> "$GITHUB_ENV"
           git clone --branch $VERSION --depth=1 --single-branch https://github.com/gap-system/gap.git $HOME/gap
@@ -88,7 +106,10 @@ runs:
           # for older versions, set WGET, for GAP >= 4.11 set DOWNLOAD
           WGET="wget -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused"
           
-          if [[ "${{ env.IS_TAG }}" == "true" ]] ; then
+          if [[ "${{ env.IS_BRANCH }}" == "true" ]] ; then
+            echo "ITS A BRANCH"
+            make bootstrap-pkg-${{ inputs.GAP_BOOTSTRAP }} DOWNLOAD="$WGET" WGET="$WGET"
+          else
             echo "ITS A TAG"
             if [[ "${{ inputs.GAP_BOOTSTRAP }}" == "minimal" ]] ; then
               BOOTSTRAP="-required"
@@ -105,9 +126,6 @@ runs:
             $WGET $URL$FILE
             mkdir pkg
             tar xzf $FILE -C pkg
-          else
-            echo "ITS A BRANCH"
-            make bootstrap-pkg-${{ inputs.GAP_BOOTSTRAP }} DOWNLOAD="$WGET" WGET="$WGET"
           fi
           
       - name: "Quick test"
