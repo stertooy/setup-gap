@@ -88,7 +88,7 @@ runs:
               BOOTSTRAP="-required"
             fi
             VER=${{ env.VERSION }}
-            if [[ $(echo -e "${VERr#v}\n4.11.1" | sort -V | head -n1) == "4.11.1" ]] ; then
+            if [[ $(echo -e "${VER#v}\n4.11.1" | sort -V | head -n1) == "4.11.1" ]] ; then
               echo "$VER is at least GAP version 4.11.1, use GitHub URL"
               URL=https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/
             else
