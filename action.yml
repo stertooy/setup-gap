@@ -88,9 +88,11 @@ runs:
               MINIMAL="-required"
             fi
             echo "ITS A TAG"
-            $WGET https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/packages$MINIMAL-${{ env.VERSION }}.tar.gz
+            URL=https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/
+            FILE=packages$MINIMAL-${{ env.VERSION }}.tar.gz
+            $WGET $URL$FILE
             mkdir pkg
-            tar xzf ../packages*.tar.gz -C pkg
+            tar xzf $FILE -C pkg
           else
             echo "ITS A BRANCH"
             make bootstrap-pkg-${{ inputs.GAP_BOOTSTRAP }} DOWNLOAD="$WGET" WGET="$WGET"
