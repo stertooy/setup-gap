@@ -3,9 +3,6 @@ name: CI
 # Trigger the workflow on push or pull request
 on:
   push:
-    branches:
-      - master
-      - cygwin*
   pull_request:
   workflow_call:
   workflow_dispatch:
@@ -26,6 +23,9 @@ jobs:
           - 4.14.0
           - default
           - latest
+        gap-bootstrap:
+          - full
+          - minimal
 
     steps:
       - uses: actions/checkout@v4
@@ -34,3 +34,4 @@ jobs:
       - uses: ./
         with:
           GAP_VERSION: ${{ matrix.gap-branch }}
+          GAP_BOOTSTRAP: ${{ matrix.gap-bootstrap }}
