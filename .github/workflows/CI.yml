@@ -19,8 +19,13 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         gap-branch:
+          - stable-4.7
+          - 4.7.7
           - master
           - 4.14.0
+          - 4.11.1
+          - 4.11.0
+          - 4.12.0
           - default
           - latest
         gap-bootstrap:
