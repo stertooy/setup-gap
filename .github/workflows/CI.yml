@@ -8,6 +8,7 @@ on:
       - cygwin*
   pull_request:
   workflow_call:
+  workflow_dispatch:
 
 env:
   CHERE_INVOKING: 1
