@@ -65,9 +65,7 @@ runs:
           CONFIGFLAGS="${{ inputs.CONFIGFLAGS }}"
 
           # build GAP in a subdirectory
-          if [ -f "autogen.sh" ] ; then
-            ./autogen.sh
-          fi
+          ./autogen.sh
           ./configure $CONFIGFLAGS
           make -j4 V=1
 
