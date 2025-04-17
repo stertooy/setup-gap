@@ -29,30 +29,34 @@ runs:
           fi
         shell: bash
 
-      - name: "Decide GAP version/branch"
+      - name: "Clone GAP"
         shell: bash
         run: |
+          VERSION=""
+          IS_TAG=true
           GIT_TAGS=$(git ls-remote --tags --refs https://github.com/gap-system/gap.git | sed 's|.*refs/tags/||')
           GIT_BRANCHES=$(git ls-remote --heads https://github.com/gap-system/gap.git | sed 's|.*refs/heads/||')
           LATEST_TAG=$(echo "$GIT_TAGS" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
           DEFAULT_BRANCH=$(git ls-remote --symref https://github.com/gap-system/gap.git HEAD | head -n 1 | sed 's|ref: refs/heads/||; s|\tHEAD||')
           if [[ "${{ inputs.GAP_VERSION }}" == "latest" ]] ; then
             VERSION=$LATEST_TAG
-          elif [[ "${{ inputs.GAP_VERSION }}" == "default" ]] ; then
-            VERSION=$DEFAULT_BRANCH
-          elif echo "$GIT_BRANCHES" | grep -qx "${{ inputs.GAP_VERSION }}" || echo "$GIT_TAGS" | grep -qx "${{ inputs.GAP_VERSION }}" ; then
+          elif echo "$GIT_TAGS" | grep -qx "${{ inputs.GAP_VERSION }}" ; then
             VERSION=${{ inputs.GAP_VERSION }}
           elif echo "$GIT_TAGS" | grep -qx "v${{ inputs.GAP_VERSION }}" ; then
             VERSION=v${{ inputs.GAP_VERSION }}
+          elif [[ "${{ inputs.GAP_VERSION }}" == "default" ]] ; then
+            VERSION=$DEFAULT_BRANCH
+            IS_TAG=false
+          elif echo "$GIT_BRANCHES" | grep -qx "${{ inputs.GAP_VERSION }}" ; then
+            VERSION=${{ inputs.GAP_VERSION }}
+            IS_TAG=false
           else
             echo "No branch or tag with name $GAP_VERSION found"
             exit 1
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          
-      - name: "Clone GAP"
-        shell: bash
-        run: git clone --branch ${{ env.VERSION }} --depth=1 --single-branch https://github.com/gap-system/gap.git $HOME/gap
+          echo "IS_TAG=$IS_TAG" >> "$GITHUB_ENV"
+          git clone --branch $VERSION --depth=1 --single-branch https://github.com/gap-system/gap.git $HOME/gap
 
       - name: "Build GAP"
         shell: bash
@@ -67,3 +71,28 @@ runs:
 
           # make it available
           ln -s $HOME/gap/gap /usr/local/bin/gap
+
+      - name: "Download packages"
+        shell: bash
+        run: |
+          cd $HOME/gap
+
+          # download packages; instruct wget to retry several times if the
+          # connection is refused, to work around intermittent failures.
+          # for older versions, set WGET, for GAP >= 4.11 set DOWNLOAD
+          WGET="wget -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused"
+          
+          if [[ "${{ env.IS_TAG }}" == "true" ]] ; then
+            if [[ "${{ inputs.GAP_BOOTSTRAP }} == "minimal" ]] ; then
+              MINIMAL="-required"
+            fi
+            echo "ITS A TAG"
+            WGET https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/packages$MINIMAL-${{ env.VERSION }}.tar.gz
+            mkdir pkg
+            tar xzf ../packages*.tar.gz -C pkg
+          else
+            echo "ITS A BRANCH"
+            make bootstrap-pkg-${{ inputs.GAP_BOOTSTRAP }} DOWNLOAD="$WGET" WGET="$WGET"
+          fi
+          rm -rf packages*.tar.gz
+          
