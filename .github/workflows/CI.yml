@@ -19,6 +19,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         gap-branch:
+          - stable-4.7
+          - 4.7.7
           - stable-4.9
           - 4.9.1
           - master
