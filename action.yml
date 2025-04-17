@@ -97,7 +97,6 @@ runs:
             echo "ITS A BRANCH"
             make bootstrap-pkg-${{ inputs.GAP_BOOTSTRAP }} DOWNLOAD="$WGET" WGET="$WGET"
           fi
-          rm -rf packages*.tar.gz
           
       - name: "Quick test"
         shell: bash
