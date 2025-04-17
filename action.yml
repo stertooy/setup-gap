@@ -88,7 +88,7 @@ runs:
               MINIMAL="-required"
             fi
             echo "ITS A TAG"
-            WGET https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/packages$MINIMAL-${{ env.VERSION }}.tar.gz
+            $WGET https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/packages$MINIMAL-${{ env.VERSION }}.tar.gz
             mkdir pkg
             tar xzf ../packages*.tar.gz -C pkg
           else
