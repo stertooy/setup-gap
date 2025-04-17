@@ -84,7 +84,7 @@ runs:
           WGET="wget -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused"
           
           if [[ "${{ env.IS_TAG }}" == "true" ]] ; then
-            if [[ "${{ inputs.GAP_BOOTSTRAP }} == "minimal" ]] ; then
+            if [[ "${{ inputs.GAP_BOOTSTRAP }}" == "minimal" ]] ; then
               MINIMAL="-required"
             fi
             echo "ITS A TAG"
