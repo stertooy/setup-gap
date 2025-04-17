@@ -71,6 +71,7 @@ runs:
 
           # make it available
           ln -s $HOME/gap/gap /usr/local/bin/gap
+          chmod +x /usr/local/bin/gap
 
       - name: "Download packages"
         shell: bash
@@ -96,3 +97,7 @@ runs:
           fi
           rm -rf packages*.tar.gz
           
+      - name: "Quick test"
+        shell: bash
+        run: |
+          gap -c "LoadAllPackages();QuitGap();"
