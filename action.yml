@@ -73,7 +73,7 @@ runs:
           fi
           
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "IS_TAG=$IS_TAG" >> "$GITHUB_ENV"
+          echo "IS_BRANCH=$IS_BRANCH" >> "$GITHUB_ENV"
           git clone --branch $VERSION --depth=1 --single-branch https://github.com/gap-system/gap.git $HOME/gap
 
       - name: "Build GAP"
