@@ -34,7 +34,7 @@ runs:
         fi
       shell: bash
 
-    - name: "Clone GAP"
+    - name: "Determine GAP version"
       shell: bash
       run: |
         VERSION=""
@@ -83,6 +83,8 @@ runs:
     - name: "Clone GAP"
       shell: bash
       run: |
+        echo "version: $VERSION"
+        echo "is branch? $IS_BRANCH"
         git clone --branch ${{ env.VERSION }} --depth=1 --single-branch ${{ inputs.REPOSITORY }} $HOME/gap
 
     - name: "Build GAP"
