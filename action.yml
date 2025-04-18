@@ -2,133 +2,145 @@ name: 'Setup GAP for package testing'
 description: 'Download and compile CI scripts, GAP and its packages'
 inputs:
   GAP_VERSION:
-    description: 'The gap version or branch to use (default: latest release)'
+    description: 'The GAP version or branch to use (default: latest release)'
     required: false
     default: 'latest'
   GAP_BOOTSTRAP:
     description: 'make bootstrap-pkg-? (i.e. full/minimal)'
     required: false
     default: 'full'
+  REPOSITORY:
+    description: 'The repostiory from which to clone GAP.'
+    required: false
+    default: 'https://github.com/gap-system/gap.git'
 env:
   CHERE_INVOKING: 1
+
 runs:
   using: "composite"
   steps:
-      - name: "Install dependencies"
-        run: |
-          echo "Installing dependencies"
-          if [ "${{runner.os}}" = "Linux" ]; then
-            packages=(
-              libgmp-dev
-              libreadline-dev
-              zlib1g-dev
-            )
-            sudo apt-get install "${packages[@]}"
-          elif [ "${{runner.os}}" = "macOS" ]; then
-            brew install gmp zlib autoconf && brew link zlib
-          fi
-        shell: bash
+    - name: "Install dependencies"
+      run: |
+        echo "Installing dependencies"
+        if [ "${{runner.os}}" = "Linux" ]; then
+          packages=(
+            libgmp-dev
+            libreadline-dev
+            zlib1g-dev
+          )
+          sudo apt-get install "${packages[@]}"
+        elif [ "${{runner.os}}" = "macOS" ]; then
+          brew install gmp zlib autoconf && brew link zlib
+        fi
+      shell: bash
 
-      - name: "Clone GAP"
-        shell: bash
-        run: |
-          VERSION=""
-          IS_BRANCH=false
+    - name: "Clone GAP"
+      shell: bash
+      run: |
+        VERSION=""
+        IS_BRANCH=false
 
-          # Get all tags and branches
-          GIT_TAGS=$(git ls-remote --tags --refs https://github.com/gap-system/gap.git | sed 's|.*refs/tags/||')
-          GIT_BRANCHES=$(git ls-remote --heads https://github.com/gap-system/gap.git | sed 's|.*refs/heads/||')
+        # Get all tags, branches and (hopefully) releases
+        GIT_TAGS=$(git ls-remote --tags --refs ${{ inputs.REPOSITORY }} | sed 's|.*refs/tags/||')
+        GIT_BRANCHES=$(git ls-remote --heads ${{ inputs.REPOSITORY }} | sed 's|.*refs/heads/||')
 
-          # Filter tags that should correspond to releases and sort
-          GIT_RELEASES=$(echo "$GIT_TAGS" | egrep '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
+        # Select only those tags we wish to allow
+        GIT_TAGS=$(echo "$GIT_TAGS" | egrep '^v[0-9]+\.[0-9]+\.[0-9]*')
+        GIT_RELS=$(echo "$GIT_TAGS" | egrep '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
 
-          if [[ "${{ inputs.GAP_VERSION }}" == "latest" ]] ; then
-            # Get tag of latest release
-            VERSION=$(echo "$GIT_RELEASES" | tail -n 1)
-          elif [[ "${{ inputs.GAP_VERSION }}" =~ ^(master|main|default)$ ]] ; then
-            # Get default branch from git
-            VERSION=$(git ls-remote --symref https://github.com/gap-system/gap.git HEAD | head -n 1 | sed 's|ref: refs/heads/||; s|\tHEAD||')
-            IS_BRANCH=true
-          elif echo "$GIT_BRANCHES" | grep -qx "${{ inputs.GAP_VERSION }}" ; then
-            # Exact branch match
-            VERSION=${{ inputs.GAP_VERSION }}
-            IS_BRANCH=true
+        if [[ "${{ inputs.GAP_VERSION }}" == "latest" ]] ; then
+          # Get tag of latest release
+          VERSION=$(echo "$GIT_RELS" | tail -n 1)
+        elif [[ "${{ inputs.GAP_VERSION }}" =~ ^(master|main|default)$ ]] ; then
+          # Get default branch from git
+          VERSION=$(git ls-remote --symref ${{ inputs.REPOSITORY }} HEAD | head -n 1 | sed 's|ref: refs/heads/||; s|\tHEAD||')
+          IS_BRANCH=true
+        elif echo "$GIT_BRANCHES" | grep -qx "${{ inputs.GAP_VERSION }}" ; then
+          # Exact branch match
+          VERSION=${{ inputs.GAP_VERSION }}
+          IS_BRANCH=true
+        else
+          # We now try to match with tags
+          # Add "v" in front if missing
+          TAG=${{ inputs.GAP_VERSION }}
+          TAG=v${TAG#v}
+          if echo "$GIT_TAGS" | grep -qx "$TAG" ; then
+            # Exact tag match
+            VERSION=$TAG
           else
-            # We now try to match with tags
-            # Add "v" in front if missing
-            TAG=${{ inputs.GAP_VERSION }}
-            TAG=v${TAG#v}
-            if echo "$GIT_TAGS" | grep -qx "$TAG" ; then
-              # Exact tag match!
-              VERSION=$TAG
-            else
-              # Expand tag to latest release
-              VERSION=$(echo "$GIT_RELEASES" | grep "^$TAG\." | tail -n 1)
-            fi
+            # Expand tag to latest release
+            VERSION=$(echo "$GIT_RELS" | grep "^$TAG\." | tail -n 1)
           fi
-            
-          if [ -z $VERSION ] ; then
-            echo "No branch or tag with name $GAP_VERSION found"
-            exit 1
-          fi
+        fi
           
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "IS_BRANCH=$IS_BRANCH" >> "$GITHUB_ENV"
-          git clone --branch $VERSION --depth=1 --single-branch https://github.com/gap-system/gap.git $HOME/gap
+        if [ -z $VERSION ] ; then
+          echo "No branch or tag with name $GAP_VERSION found"
+          exit 1
+        fi
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+        echo "IS_BRANCH=$IS_BRANCH" >> "$GITHUB_ENV"
+        
+    - name: "Clone GAP"
+      shell: bash
+      run: |
+        git clone --branch ${{ env.VERSION }} --depth=1 --single-branch ${{ inputs.REPOSITORY }} $HOME/gap
 
-      - name: "Build GAP"
-        shell: bash
-        run: |
-          cd $HOME/gap
-          CONFIGFLAGS="${{ inputs.CONFIGFLAGS }}"
+    - name: "Build GAP"
+      shell: bash
+      run: |
+        cd $HOME/gap
+        CONFIGFLAGS="${{ inputs.CONFIGFLAGS }}"
 
-          # build GAP in a subdirectory
-          if [ -f "autogen.sh" ] ; then
-            ./autogen.sh
+        # build GAP in a subdirectory
+        if [ -f "autogen.sh" ] ; then
+          ./autogen.sh
+        fi
+        ./configure $CONFIGFLAGS
+        make -j4 V=1
+
+        # make it available
+        if [ -f "$HOME/gap/gap" ] ; then
+          ln -s $HOME/gap/gap /usr/local/bin/gap
+        else
+          echo -e '#!/bin/sh\nsh '"$HOME"'/gap/bin/gap.sh "$@"\n' > /usr/local/bin/gap
+        fi
+        chmod +x /usr/local/bin/gap
+
+    - name: "Download packages"
+      shell: bash
+      run: |
+        cd $HOME/gap
+        # download packages; instruct wget to retry several times if the
+        # connection is refused, to work around intermittent failures.
+        # for older versions, set WGET, for GAP >= 4.11 set DOWNLOAD
+        WGET="wget -q -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused"
+        
+        if [[ "${{ env.IS_BRANCH }}" == "true" ]] ; then
+          echo "ITS A BRANCH"
+          make bootstrap-pkg-${{ inputs.GAP_BOOTSTRAP }} DOWNLOAD="$WGET" WGET="$WGET"
+        else
+          echo "ITS A TAG"
+          if [[ "${{ inputs.GAP_BOOTSTRAP }}" == "minimal" ]] ; then
+            BOOTSTRAP="-required"
           fi
-          ./configure $CONFIGFLAGS
-          make -j4 V=1
-
-          # make it available
-          if [ -f "$HOME/gap/gap" ] ; then
-            ln -s $HOME/gap/gap /usr/local/bin/gap
+          VER=${{ env.VERSION }}
+          if [[ $(echo -e "${VER#v}\n4.11.1" | sort -V | head -n1) == "4.11.1" ]] ; then
+            echo "$VER is at least GAP version 4.11.1, use GitHub URL"
+            URL=https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/
           else
-            echo -e '#!/bin/sh\nsh '"$HOME"'/gap/bin/gap.sh "$@"\n' > /usr/local/bin/gap
+            echo "$VER is older than GAP version 4.11.1, use GAP URL"
+            URL=https://files.gap-system.org/gap4pkgs/
           fi
-          chmod +x /usr/local/bin/gap
-
-      - name: "Download packages"
-        shell: bash
-        run: |
-          cd $HOME/gap
-          # download packages; instruct wget to retry several times if the
-          # connection is refused, to work around intermittent failures.
-          # for older versions, set WGET, for GAP >= 4.11 set DOWNLOAD
-          WGET="wget -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused"
-          
-          if [[ "${{ env.IS_BRANCH }}" == "true" ]] ; then
-            echo "ITS A BRANCH"
-            make bootstrap-pkg-${{ inputs.GAP_BOOTSTRAP }} DOWNLOAD="$WGET" WGET="$WGET"
-          else
-            echo "ITS A TAG"
-            if [[ "${{ inputs.GAP_BOOTSTRAP }}" == "minimal" ]] ; then
-              BOOTSTRAP="-required"
-            fi
-            VER=${{ env.VERSION }}
-            if [[ $(echo -e "${VER#v}\n4.11.1" | sort -V | head -n1) == "4.11.1" ]] ; then
-              echo "$VER is at least GAP version 4.11.1, use GitHub URL"
-              URL=https://github.com/gap-system/gap/releases/download/${{ env.VERSION }}/
-            else
-              echo "$VER is older than GAP version 4.11.1, use GAP URL"
-              URL=https://files.gap-system.org/gap4pkgs/
-            fi
-            FILE=packages$BOOTSTRAP-${{ env.VERSION }}.tar.gz
-            $WGET $URL$FILE
-            mkdir pkg
-            tar xzf $FILE -C pkg
-          fi
-          
-      - name: "Quick test"
-        shell: bash
-        run: |
-          gap -A -c "LoadAllPackages();QuitGap();"
+          FILE=packages$BOOTSTRAP-${{ env.VERSION }}.tar.gz
+          $WGET $URL$FILE
+          mkdir pkg
+          tar xzf $FILE -C pkg
+        fi
+        
+    - name: "Quick test"
+      shell: bash
+      run: |
+        gap -A <<GAPINPUT
+            Print(GAPInfo.Version);
+            QuitGap();
+        GAPINPUT
