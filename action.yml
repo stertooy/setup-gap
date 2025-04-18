@@ -89,6 +89,12 @@ runs:
           # make it available
           ln -s $HOME/gap/gap /usr/local/bin/gap
 
+          # test
+          gap <<GAPINPUT
+            Print("hi!");
+            quit;
+          GAPINPUT
+
       - name: "Download packages"
         shell: bash
         run: |
