@@ -140,7 +140,6 @@ runs:
     - name: "Quick test"
       shell: bash
       run: |
-        gap -A <<GAPINPUT
-            Print(GAPInfo.Version);
-            QuitGap();
+        gap <<GAPINPUT
+            quit;
         GAPINPUT
