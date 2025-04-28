@@ -1,53 +1,57 @@
 name: CI
 
-# Trigger the workflow on push or pull request
 on:
   push:
-    branches:
-      - master
-      - cygwin*
   pull_request:
-
-env:
-  CHERE_INVOKING: 1
+  workflow_call:
+  workflow_dispatch:
 
 jobs:
   test:
-    name: ${{ matrix.gap-branch }} ${{ matrix.ABI }} - Packages ${{ matrix.GAP_PKGS_TO_BUILD }} - HPCGAP ${{ matrix.HPCGAP }} - ${{ matrix.os }}
+    name: ${{ matrix.os }} - ${{ matrix.gap-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        gap-branch:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        gap-version:
+          - latest
+          - v4
+          - "4.10"
+          - 4.11.0
+          - v4.11.1
+          - 4.12.0
+          - v4.13.0-alpha2
+          - 4.14.0-beta1
+          - v4.14.0
+          - stable-4.10
+          - stable-4.12
+          - stable-4.14
           - master
-        ABI: ['']
-        GAP_PKGS_TO_BUILD:
-          - ''
-          - 'default'
-        HPCGAP: ['no']
-        include:
-          - os: ubuntu-latest
-            gap-branch: master
-            GAP_PKGS_TO_BUILD: ''
-            HPCGAP: yes
-          - os: ubuntu-latest
-            gap-branch: master
-            ABI: 32
-            GAP_PKGS_TO_BUILD: 'default'
-            HPCGAP: no
-          - os: macos-latest
-            gap-branch: master
-            GAP_PKGS_TO_BUILD: ''
-            HPCGAP: no
+          - main
+          - default
 
     steps:
-      - uses: actions/checkout@v4
-      - if: ${{ matrix.os == 'windows-latest' }}
-        uses: gap-actions/setup-cygwin@v1
-      - uses: ./
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Cygwin"
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: stertooy/setup-cygwin@official-action-and-batch
+        
+      - name: "Setup GAP"
+        uses: ./
         with:
-          GAPBRANCH: ${{ matrix.gap-branch }}
-          ABI: ${{ matrix.ABI }}
-          GAP_PKGS_TO_BUILD: ${{ matrix.GAP_PKGS_TO_BUILD }}
-          HPCGAP: ${{ matrix.HPCGAP }}
+          gap-version: ${{ matrix.gap-version }}
+
+      - name: "Run GAP"
+        shell: bash
+        run: |
+          gap -A <<GAPINPUT
+            FORCE_QUIT_GAP(LoadPackage("io") and LoadPackage("json") and LoadPackage("profiling"));
+          GAPINPUT
+
+      - name: "Check ENV for GAPROOT"
+        shell: bash
+        run: |
+          echo $GAPROOT
