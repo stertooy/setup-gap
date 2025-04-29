@@ -48,7 +48,7 @@ runs:
         GIT_RELSALL=${GIT_RELS#*v4.9.3}
         GIT_RELSFIN=$(echo "$GIT_RELSALL" | egrep '^v[0-9]+\.[0-9]+\.[0-9]+$')
 
-        if [[ "${{ inputs.gap-version }}" =~ ^(|latest)$ ]] ; then
+        if [[ -z "${{ inputs.gap-version }}" || "${{ inputs.gap-version }}" == "latest" ]] ; then
           # Get tag of latest (non-pre-)release
           IS_RELEASE=true
           VERSION=$(echo "$GIT_RELSFIN" | tail -n 1)
