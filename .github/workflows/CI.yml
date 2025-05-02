@@ -55,3 +55,13 @@ jobs:
         shell: bash
         run: |
           echo $GAPROOT
+          
+      - name: "Check ARCH"
+        shell: bash
+        run: |
+          gap <<GAPINPUT
+            Print( "Unix: ", ARCH_IS_UNIX(), "\n" );
+            Print( "macOS: ", ARCH_IS_MAC_OS_X(), "\n" );
+            Print( "Windows: ", ARCH_IS_WINDOWS(), "\n" );
+            Print( "WSL: ", ARCH_IS_WSL(), "\n" );
+          GAPINPUT
