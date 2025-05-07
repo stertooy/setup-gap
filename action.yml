@@ -116,11 +116,19 @@ runs:
       shell: bash
       run: |
         cd $GAPROOT
-
+        CONFIGFLAGS="${{ inputs.configflags }}"
+        
         if [ -f "autogen.sh" ] ; then
           ./autogen.sh
         fi
-        ./configure "${{ inputs.configflags }}"
+
+        # TODO: this will probably cause trouble if --with-gmp or --with-readline is already in CONFIGFLAGS
+        if [[ "${{ runner.os }}" = "macOS" ]] ; then
+          BP=$(brew --prefix)
+          CONFIGFLAGS="--with-gmp=$BP --with-readline=$BP/opt/readline $CONFIGFLAGS"
+        fi
+        ./configure $CONFIGFLAGS
+        
         make -j4 V=1
 
         # Add to PATH
