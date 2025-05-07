@@ -119,6 +119,7 @@ runs:
         CONFIGFLAGS="${{ inputs.configflags }}"
         
         if [ -f "autogen.sh" ] ; then
+          echo "::group:: Running autogen"
           ./autogen.sh
         fi
 
@@ -127,10 +128,13 @@ runs:
           BP=$(brew --prefix)
           CONFIGFLAGS="--with-gmp=$BP --with-readline=$BP/opt/readline $CONFIGFLAGS"
         fi
+        echo "::group:: Running configure with flags $CONFIGFLAGS"
         ./configure $CONFIGFLAGS
-        
+
+        echo "::group:: Running make"
         make -j4 V=1
 
+        echo "::group:: Adding GAP to PATH"
         # Add to PATH
         if [ -f "$GAPROOT/gap" ] ; then
           ln -s $GAPROOT/gap /usr/local/bin/gap
