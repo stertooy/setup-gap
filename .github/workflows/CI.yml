@@ -26,7 +26,7 @@ jobs:
           - stable-4.14
           - default
           - v4.15dev
-        configflags: ['--with-gmp=system', '--with-gmp=builtin']
+        configflags: ['', '--with-gmp=builtin']
 
     steps:
       - name: "Checkout"
