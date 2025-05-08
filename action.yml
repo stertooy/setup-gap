@@ -123,7 +123,6 @@ runs:
           ./autogen.sh
         fi
 
-        # TODO: this will probably cause trouble if --with-gmp or --with-readline is already in CONFIGFLAGS
         if [[ "${{ runner.os }}" = "macOS" ]] ; then
           BP=$(brew --prefix)
           CONFIGFLAGS="--with-gmp=$BP --with-readline=$BP/opt/readline $CONFIGFLAGS"
