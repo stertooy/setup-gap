@@ -104,8 +104,11 @@ runs:
           WGET="wget -q -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused -O $RUNNER_TEMP/gap.tar.gz"
           URL=$(cat $RUNNER_TEMP/gap_releases.json | jq -r --arg VERSION "$VERSION" '.[] | select(.tagName == $VERSION) | .url ')
           SHA=$(cat $RUNNER_TEMP/gap_releases.json | jq -r --arg VERSION "$VERSION" '.[] | select(.tagName == $VERSION) | .sha256 ')
-          $WGET $URL          
-          echo "$SHA gap.tar.gz" | sha256sum -c
+          # Download archive
+          $WGET $URL
+          # Verify checksum
+          echo "$SHA $RUNNER_TEMP/gap.tar.gz" | sha256sum -c
+          # Extract archive
           tar xzf gap.tar.gz -C $GAPROOT --strip-components=1
         else
           git clone --branch $VERSION --depth=1 --single-branch https://github.com/${{ inputs.repository }}.git $GAPROOT
