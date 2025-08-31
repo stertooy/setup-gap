@@ -106,11 +106,11 @@ runs:
           SHA=$(cat $RUNNER_TEMP/gap_releases.json | jq -r --arg VERSION "$VERSION" '.[] | select(.tagName == $VERSION) | .sha256 ')
           # Download archive
           $WGET $URL
-          # Verify checksum
-          # OLD echo "$SHA $RUNNER_TEMP/gap.tar.gz" | sha256sum -c
+          # Recalculate checksum
           CHK=$(shasum -a 256 $RUNNER_TEMP/gap.tar.gz | awk '{print $1}')
-          echo "Checksum from json: $SHA"
-          echo "Checksum from test: $CHK"
+          # Remove leading backslash if present, this can happen on Cygwin
+          CHK=${CHK#\\}
+          # Compare checksums
           if [[ "$SHA" != "$CHK" ]] ; then
             echo "Checksum is wrong!"
             exit 1
