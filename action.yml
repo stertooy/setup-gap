@@ -109,7 +109,7 @@ runs:
           # Verify checksum
           echo "$SHA $RUNNER_TEMP/gap.tar.gz" | sha256sum -c
           # Extract archive
-          tar xzf gap.tar.gz -C $GAPROOT --strip-components=1
+          tar xzf $RUNNER_TEMP/gap.tar.gz -C $GAPROOT --strip-components=1
         else
           git clone --branch $VERSION --depth=1 --single-branch https://github.com/${{ inputs.repository }}.git $GAPROOT
         fi
