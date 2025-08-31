@@ -38,47 +38,49 @@ runs:
       shell: bash
       run: |
         VERSION=""
-        IS_RELEASE=false
+        IS_RELEASE=true
 
-        # Select only those releases we wish to allow, with or without pre-releases
-        RELEASES_JSON=$(wget -q0- "gap_releases.json")
-        
-        if [[ -z "${{ inputs.gap-version }}" || "${{ inputs.gap-version }}" == "latest" ]] ; then
-          echo "Version: latest release"
-          IS_RELEASE=true
-          VERSION=$(echo "$GIT_RELS_JSON" | jq -r '.[] | select(.isLatest == true) | .tagName )
-        elif [[ "${{ inputs.gap-version }}" =~ ^(master|main|default)$ ]] ; then
-          echo "Version: default branch"
-          VERSION=$(git ls-remote --symref https://github.com/${{ inputs.repository }}.git HEAD | head -n 1 | sed 's|ref: refs/heads/||; s|\tHEAD||')
-        else
-          echo "Checking releases"
-          GIT_RELS=$(echo "$RELEASES_JSON" | jq -r '.[].tagName' | sort -V)
-          GIT_NPRS=$(echo "$RELEASES_JSON" | jq -r '.[] | select(.isPrerelease == false) | .tagName' | sort -V)
-
-          # Add "v" in front if missing
-          REL=${{ inputs.gap-version }}
-          REL=v${REL#v}
-          
-          if echo "$GIT_RELS" | grep -qx "$REL" ; then
-            echo "Version: exact release match"
-            IS_RELEASE=true
-            VERSION=$REL
-          elif echo "$GIT_NPRS" | grep -q "^$REL\." ; then
-            echo "Version: expanded to release"
-            IS_RELEASE=true
-            VERSION=$(echo "$GIT_NPRS" | grep "^$REL\." | tail -n 1)
+        # We only check for releases in the official repository
+        if [[ "${{ inputs.repository }}" == "gap-system/gap" ]] ; then
+          wget -q0- "https://raw.githubusercontent.com/Joseph-Edwards/GapWWW/refs/heads/add-json/_data/gap_releases.json" -O $RUNNER_TEMP/gap_releases.json
+          if [[ "${{ inputs.gap-version }}" == "latest" ]] ; then
+            echo "Version: latest release"
+            VERSION=$(cat $RUNNER_TEMP/gap_releases.json | jq -r '.[] | select(.isLatest == true) | .tagName )
           else
-            echo "Checking branches and tags"
-            if git ls-remote --heads https://github.com/${{ inputs.repository }}.git | sed 's|.*refs/heads/||' | grep -qx "${{ inputs.gap-version }}" ; then
-              echo "Version: exact branch match"
-              VERSION=${{ inputs.gap-version }}
-            elif git ls-remote --tags --refs https://github.com/${{ inputs.repository }}.git | sed 's|.*refs/tags/||' | grep -qx "${{ inputs.gap-version }}" ; then
-              echo "Version: exact tag match"
-              VERSION=${{ inputs.gap-version }}
-            else
-              echo "No release, branch or tag with name ${{ inputs.gap-version }} found"
-              exit 1
+            echo "Checking releases"
+            GIT_RELS=$(cat $RUNNER_TEMP/gap_releases.json | jq -r '.[].tagName' | sort -V)
+            GIT_NPRS=$(cat $RUNNER_TEMP/gap_releases.json | jq -r '.[] | select(.isPrerelease == false) | .tagName' | sort -V)
+
+            # Add "v" in front if missing
+            REL=${{ inputs.gap-version }}
+            REL=v${REL#v}
+
+            if echo "$GIT_RELS" | grep -qx "$REL" ; then
+              echo "Version: exact release match"
+              VERSION=$REL
+            elif echo "$GIT_NPRS" | grep -q "^$REL\." ; then
+              echo "Version: expanded to release"
+              VERSION=$(echo "$GIT_NPRS" | grep "^$REL\." | tail -n 1)
             fi
+          fi
+        fi
+
+        # If we use a different repo or didn't match a release, we try branches and tags instead
+        if [[ -z "$VERSION" ]] ; then
+          IS_RELEASE=false
+          # Use the repository's default branch, or autocorrect to the default one if "master" or "main" was given
+          if [[ "${{ inputs.gap-version }}" =~ ^(master|main|default)$ ]] ; then
+            echo "Version: default branch"
+            VERSION=$(git ls-remote --symref https://github.com/${{ inputs.repository }}.git HEAD | head -n 1 | sed 's|ref: refs/heads/||; s|\tHEAD||')
+          elif git ls-remote --heads https://github.com/${{ inputs.repository }}.git | sed 's|.*refs/heads/||' | grep -qx "${{ inputs.gap-version }}" ; then
+            echo "Version: exact branch match"
+            VERSION=${{ inputs.gap-version }}
+          elif git ls-remote --tags --refs https://github.com/${{ inputs.repository }}.git | sed 's|.*refs/tags/||' | grep -qx "${{ inputs.gap-version }}" ; then
+            echo "Version: exact tag match"
+            VERSION=${{ inputs.gap-version }}
+          else
+            echo "No release, branch or tag with name ${{ inputs.gap-version }} found"
+            exit 1
           fi
         fi
 
@@ -99,11 +101,9 @@ runs:
         IS_RELEASE: ${{ steps.version.outputs.IS_RELEASE }}
       run: |
         if [[ "$IS_RELEASE" == "true" ]] ; then
-          WGET="wget -q -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused"
-          URL=https://github.com/${{ inputs.repository }}/releases/download/$VERSION/
-          FILE=gap-${VERSION#v}.tar.gz
-          $WGET $URL$FILE
-          tar xzf $FILE -C $GAPROOT --strip-components=1
+          WGET="wget -q -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused -O=-"
+          URL=$(cat $RUNNER_TEMP/gap_releases.json | jq -r '.[] | select(.tagName == "$VERSION") | .url )
+          $WGET $URL | tar xzf - -C $GAPROOT --strip-components=1
         else
           git clone --branch $VERSION --depth=1 --single-branch https://github.com/${{ inputs.repository }}.git $GAPROOT
         fi
