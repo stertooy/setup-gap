@@ -109,6 +109,8 @@ runs:
           # Verify checksum
           # OLD echo "$SHA $RUNNER_TEMP/gap.tar.gz" | sha256sum -c
           CHK=$(shasum -a 256 $RUNNER_TEMP/gap.tar.gz | awk '{print $1}')
+          echo "Checksum from json: $SHA"
+          echo "Checksum from test: $CHK"
           if [[ "$SHA" != "$CHK" ]] ; then
             echo "Checksum is wrong!"
             exit 1
