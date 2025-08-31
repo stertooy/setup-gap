@@ -107,7 +107,12 @@ runs:
           # Download archive
           $WGET $URL
           # Verify checksum
-          echo "$SHA $RUNNER_TEMP/gap.tar.gz" | sha256sum -c
+          # OLD echo "$SHA $RUNNER_TEMP/gap.tar.gz" | sha256sum -c
+          CHK=$(shasum -a 256 $RUNNER_TEMP/gap.tar.gz | awk '{print $1}')
+          if [[ "$SHA" != "$CHK" ]] ; then
+            echo "Checksum is wrong!"
+            exit 1
+          fi
           # Extract archive
           tar xzf $RUNNER_TEMP/gap.tar.gz -C $GAPROOT --strip-components=1
         else
