@@ -102,8 +102,7 @@ runs:
       run: |
         if [[ "$IS_RELEASE" == "true" ]] ; then
           WGET="wget -q -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused -O=-"
-          URL=$(cat $RUNNER_TEMP/gap_releases.json | jq -r --arg VERSION "$VERSION" '.[] | select(.tagName ==
- $VERSION) | .url ')
+          URL=$(cat $RUNNER_TEMP/gap_releases.json | jq -r --arg VERSION "$VERSION" '.[] | select(.tagName == $VERSION) | .url ')
           $WGET $URL | tar xzf - -C $GAPROOT --strip-components=1
           # TODO: confirm sha256
         else
