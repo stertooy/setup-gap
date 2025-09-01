@@ -13,11 +13,6 @@ inputs:
     description: 'Arguments to pass to the GAP configure script (e.g. --enable-debug)'
     required: false
     default: ''
-  gap-pkgs-to-build:
-    description: 'A space-separated list of the GAP packages to build'
-    required: false
-    default: 'io json profiling'
-    deprecationMessage: 'This input will possibly be removed in the future, so do not rely on it too much'
 
 runs:
   using: "composite"
@@ -30,6 +25,7 @@ runs:
         if [[ "${{ runner.os }}" == "Linux" ]] ; then
           sudo apt-get install libgmp-dev libreadline-dev zlib1g-dev
         elif [[ "${{ runner.os }}" = "macOS" ]] ; then
+          # Note: readline is installed by default, adding it here causes warnings in GitHub runners
           brew install zlib autoconf && brew link zlib --force
         fi
 
@@ -143,16 +139,23 @@ runs:
         echo "::group:: Running make"
         make -j4 V=1
 
-        echo "::group:: Adding GAP to PATH"
-        # Add to PATH
-        if [ -f "$GAPROOT/gap" ] ; then
-          ln -s $GAPROOT/gap /usr/local/bin/gap
-        else
-          echo -e '#!/bin/sh\nsh '"$GAPROOT"'/bin/gap.sh "$@"\n' > /usr/local/bin/gap
-        fi
+    - name: "Make GAP executable"
+      shell: bash
+      run: |
+        mkdir -p /tmp/gaproot/pkg/
+        ln -f -s $PWD /tmp/gaproot/pkg/
 
-        # Just to be sure it's executable
+        if [ -f "$GAPROOT/gap" ] ; then
+          EXEC="$GAPROOT/gap"
+        else
+          EXEC="sh $GAPROOT/bin/gap.sh"
+        fi
+        echo -e '#!/bin/bash\n'"$EXEC"' -l "/tmp/gaproot;" "$@"\n' > /usr/local/bin/gap
+
+        # Make it executable
         chmod +x /usr/local/bin/gap
+
+        echo 'GAP="gap --quitonbreak"' >> "$GITHUB_ENV"
 
     - name: "Download GAP packages"
       shell: bash
@@ -162,14 +165,3 @@ runs:
         WGET="wget -q -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused"
         # For GAP >= 4.11 set DOWNLOAD, for older versions set WGET
         make bootstrap-pkg-full DOWNLOAD="$WGET" WGET="$WGET"
-
-    - name: "Build GAP packages"
-      shell: bash
-      if: ${{ inputs.gap-pkgs-to-build  != '' }}
-      run: |
-        BuildPackagesOptions="--strict"
-        shopt -s nocaseglob
-        cd $GAPROOT/pkg
-        for pkg in ${{ inputs.gap-pkgs-to-build }}; do
-            ../bin/BuildPackages.sh ${BuildPackagesOptions} $pkg*
-        done

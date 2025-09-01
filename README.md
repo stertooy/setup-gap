@@ -1,4 +1,4 @@
-# setup-gap V3
+# setup-gap v3
 
 This GitHub action downloads and prepares an instance of GAP.
 It is intended to be used by the Continuous Integration (CI) action of a GAP
@@ -25,6 +25,7 @@ All of the following inputs are optional.
 
 - `gap-version`:
    - The gap version or branch to build. You may specify "latest" for the latest release, or "default" for the default branch.
+     see "Changes to inputs" under "What's new in v3" for more details.
    - default: `latest`
 - `repository`
    - The GitHub repository from which to clone GAP.
@@ -32,17 +33,25 @@ All of the following inputs are optional.
 - `configflags`:
    - Arguments to pass to the GAP configure script.
    - default: `''`
-- `gap-pkgs-to-build`:
-   - A space-separated list of the GAP packages to build.
-   - default: `'io json profiling'`
 
 ### What's new in v3
-Version v3 contains many changes compared to version v2. Simply replacing `setup-gap@v2` by `setup-gap@v3` in an existing workflow
-will almost surely not work.
+Version v3 contains many changes compared to version v2. When replacing `setup-gap@v2` by `setup-gap@v3` in an existing workflow,
+you will have to change the inputs accordingly. We also recommend replacing branches by releases, e.g. `stable-4.14` by `4.14`.
 
 #### Changes to inputs:
- - The `GAPBRANCH` input has been replaced by `gap-version`, which accepts version numbers, branch names, or either `default` or `latest`.
- - The input `GAP_PKGS_TO_CLONE` has been removed. This should now be done by the user in a separate step in the workflow.
+ - The `GAPBRANCH` input has been replaced by `gap-version`, which accepts the following input types:
+   - `latest`: this will use the latest release of GAP. This will **not** point to the latest pre-release if it is more recent
+     than the latest release.
+   - version numbers: e.g. `v4.14.0`, `v4.15.0-beta1`, etc. The leading `v` is optional, the oldest available release is `v4.10.0`.
+   - incomplete version numbers: e.g. `v4`, `v4.10`, etc. These will be expanded to the most recent release starting with the incomplete
+     version number, e.g. `v4.10` is equivalent to `v4.10.2`. This will **not** expand to pre-releases, and again the leading `v` is
+     optional.
+   - branch and tag names: e.g. `master`, `stable-v4.14`, etc. This will use the GAP version built from the corresponding branch or tag.
+     NB: the inputs `master`, `main` and `default` will always point at the "default branch" of the repository, i.e. the branch you are
+     presented with when navigating to `github.com/<owner>/<repo>`.
+ - The inputs `GAP_PKGS_TO_CLONE` and `GAP_PKGS_TO_BUILD` have been removed. This should now be done by the user in a separate step in
+   the workflow, e.g. by using `git clone` or the [PackageManager](https://gap-packages.github.io/PackageManager/) package. See the
+   Examples section below.
  - The input `GAP_PKGS_TO_BUILD` has been renamed to `gap-pkgs-to-build`. It can only be used to build packages distributed with GAP.
    In addition to `IO` and `profiling`, the package `json` is now also built by default.
  - The inputs `HPCGAP` and `ABI` have been removed, and support for both HPC-GAP and 32-bit builds has been removed.
@@ -53,10 +62,10 @@ will almost surely not work.
 #### Changes to functionality:
  - There is no longer a separate branch for running this action on Windows. This action should work on Windows, assuming it is
    preceded by version v2 or later of [setup-cygwin](https://github.com/gap-actions/setup-gap).
- - The installation location of GAP is added to the variable `GAPROOT`, which can be used in subsequent steps in the workflow.
+ - The installation location of GAP is stored in the environment variable `GAPROOT`, which can be used in subsequent steps in the workflow.
  - The GAP executable is added to `PATH`, thus GAP can now always be started by calling `gap`.
 
-### Example
+### Examples
 
 The following is a minimal example to run this action.
 
@@ -76,6 +85,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: gap-actions/setup-gap@v3
+      # ... additional steps using GAP will usually follow here
 ```
 
 A more extensive example:
@@ -108,6 +118,20 @@ jobs:
       - uses: gap-actions/setup-gap@v3
         with:
           gap-version: ${{ matrix.gap-version }}
+      - shell: bash
+        run: |
+          # Install package via 'git clone'
+          cd $HOME/.gap/pkg
+          git clone https://github.com/gap-packages/io
+          cd io
+          sh autogen.sh
+          ./configure --with-gaproot=$GAPROOT
+          make -j4
+      - shell: bash
+        run: |
+          # Install packages via PackageManager
+          gap -c 'LoadPackage("PackageManager"); InstallPackage("https://github.com/gap-packages/orb"); QUIT;'
+          gap -c 'LoadPackage("PackageManager"); InstallPackage("cvec"); QUIT;'
 ```
 
 ## Contact
