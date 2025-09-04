@@ -66,3 +66,8 @@ jobs:
           $GAP -A <<GAPINPUT
             quit;
           GAPINPUT
+          
+          GAP="$GAP -A"
+          $GAP <<GAPINPUT
+            quit;
+          GAPINPUT
