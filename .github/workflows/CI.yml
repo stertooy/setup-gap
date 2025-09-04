@@ -50,13 +50,6 @@ jobs:
           gap-version: ${{ matrix.gap-version }}
           configflags: ${{ matrix.configflags }}
 
-      - name: "Check ENV for GAPROOT and GAP variables"
-        shell: bash
-        run: |
-          if [[ -z "$GAPROOT" || -z "$GAP" ]] ; then
-            exit 1
-          fi
-
       - name: "Check if GAP can run"
         shell: bash
         run: |
@@ -66,8 +59,6 @@ jobs:
           $GAP -A <<GAPINPUT
             quit;
           GAPINPUT
-          echo $GAP
-          GAP="$GAP -A"
-          $GAP <<GAPINPUT
+          $GAPROOT/gap -A <<GAPINPUT
             quit;
           GAPINPUT
