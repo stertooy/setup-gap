@@ -33,10 +33,6 @@ inputs:
     description: 'set to 32 to use 32bit build flags for the package'
     required: false
     default: 'REMOVED'
-  CONFIGFLAGS:
-    description: 'arguments to pass to the GAP configure script (e.g. --enable-debug)'
-    required: false
-    default: 'REMOVED'
   GAP_BOOTSTRAP:
     description: 'make bootstrap-pkg-? (i.e. full/minimal)'
     required: false
