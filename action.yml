@@ -194,7 +194,7 @@ runs:
         ./configure $CONFIGFLAGS
 
         echo "::group:: Running make"
-        make -j4 V=1
+        make -j$(nproc) V=1
 
     - name: "Make GAP executable"
       shell: bash
