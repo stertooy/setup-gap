@@ -27,6 +27,9 @@ jobs:
           - v4.16dev
           - stable-4.9
           - stable-4.10
+          - 4.9
+          - v4.9.1
+          - v4.9.2
         configflags: ['', '--with-gmp=builtin']
         exclude:
           - os: windows-latest
