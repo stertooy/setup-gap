@@ -16,17 +16,21 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         gap-version:
-          - v4.10
-          - v4.11.1
-          - stable-4.12
-          - v4.13.0-alpha2
-          - 4.15.0-beta1
-          - 4
-          - latest
           - devel
-          - v4.16dev
-          - '4.9'
+          - stable-4.15
+          - stable-4.14
+          - stable-4.13
+          - stable-4.12
+          - stable-4.11
+          - stable-4.10
           - stable-4.9
+          - '4.15'
+          - '4.14'
+          - '4.13'
+          - '4.12'
+          - '4.11'
+          - '4.10'
+          - '4.9'
         configflags: ['', '--with-gmp=builtin']
         exclude:
           - os: windows-latest
