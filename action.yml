@@ -95,7 +95,7 @@ runs:
 
         # We only check for releases in the official repository
         if [[ "${{ inputs.repository }}" == "gap-system/gap" ]] ; then
-          wget -q -O $RUNNER_TEMP/gap_releases.json https://raw.githubusercontent.com/gap-system/GapWWW/refs/heads/auto/sync-with-github-releases/releases.json
+          wget -q -O $RUNNER_TEMP/gap_releases.json https://raw.githubusercontent.com/gap-system/GapWWW/master/releases.json
           if [[ "${{ inputs.gap-version }}" == "latest" ]] ; then
             echo "Version: latest release"
             VERSION=$(cat $RUNNER_TEMP/gap_releases.json | jq -r '.[] | select(.isLatest == true) | .tagName ')
@@ -154,13 +154,13 @@ runs:
         IS_RELEASE: ${{ steps.version.outputs.IS_RELEASE }}
       run: |
         if [[ "$IS_RELEASE" == "true" ]] ; then
-          WGET="wget -q -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused -O gap.tar.gz"
+          WGET="wget -q -N --no-check-certificate --tries=5 --waitretry=5 --retry-connrefused -O gap-archive"
           URL=$(cat $RUNNER_TEMP/gap_releases.json | jq -r --arg VERSION "$VERSION" '.[] | select(.tagName == $VERSION) | .url ')
           SHA=$(cat $RUNNER_TEMP/gap_releases.json | jq -r --arg VERSION "$VERSION" '.[] | select(.tagName == $VERSION) | .sha256 ')
           # Download archive
           $WGET $URL
           # Recalculate checksum
-          CHK=$(shasum -a 256 gap.tar.gz | awk '{print $1}')
+          CHK=$(shasum -a 256 gap-archive | awk '{print $1}')
           # Remove leading backslash if present, this can happen on Cygwin
           CHK=${CHK#\\}
           # Compare checksums
@@ -169,8 +169,8 @@ runs:
             exit 1
           fi
           # Extract archive
-          tar xzf gap.tar.gz -C $GAPROOT --strip-components=1
-          rm gap.tar.gz
+          tar xf gap-archive -C $GAPROOT --strip-components=1
+          rm gap-archive
         else
           git clone --branch $VERSION --depth=1 --single-branch https://github.com/${{ inputs.repository }}.git $GAPROOT
         fi
@@ -181,7 +181,7 @@ runs:
         cd $GAPROOT
         CONFIGFLAGS="${{ inputs.configflags }}"
 
-        if [ -f "autogen.sh" ] ; then
+        if [ ! -x "configure" ] ; then
           echo "::group:: Running autogen"
           ./autogen.sh
         fi
@@ -189,12 +189,15 @@ runs:
         if [[ "${{ runner.os }}" = "macOS" ]] ; then
           BP=$(brew --prefix)
           CONFIGFLAGS="--with-gmp=$BP --with-readline=$BP/opt/readline $CONFIGFLAGS"
+          NPROC=$(sysctl -n hw.ncpu)
+        else
+          NPROC=$(nproc)
         fi
         echo "::group:: Running configure with flags $CONFIGFLAGS"
         ./configure $CONFIGFLAGS
 
         echo "::group:: Running make"
-        make -j$(nproc) V=1
+        make -j$NPROC V=1
 
     - name: "Make GAP executable"
       shell: bash
