@@ -24,8 +24,9 @@ jobs:
           - '4.11'
           - '4.10'
           - '4.9'
-        configflags: ['']
         include:
+          - os: ubuntu-latest
+            configflags: ''
           - os: ubuntu-latest
             configflags: '--with-gmp=builtin'
           - os: ubuntu-latest
