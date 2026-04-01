@@ -24,14 +24,12 @@ jobs:
           - 4
           - latest
           - devel
-          - v4.16dev
           - '4.9'
         configflags: ['', '--with-gmp=builtin']
         exclude:
           - os: windows-latest
             configflags: '--with-gmp=builtin'
           - os: macos-latest
-            gap-version: v4.11.1
             configflags: '--with-gmp=builtin'
           - os: macos-latest
             gap-version: '4.9'
