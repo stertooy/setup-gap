@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.gap-version }} on ${{ matrix.os }} with ${{ !matrix.configflags && 'system GMP' || 'built-in GMP'}}
+    name: ${{ matrix.gap-version }} on ${{ matrix.os }} with ${{ !matrix.configflags && 'system GMP' || 'builtin GMP'}}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -24,7 +24,7 @@ jobs:
           - '4.11'
           - '4.10'
           - '4.9'
-        configflags: ['','--with-gmp=builtin']
+        configflags: ['', '--with-gmp=builtin']
         exclude:
           - os: windows-latest
             configflags: '--with-gmp=builtin'
