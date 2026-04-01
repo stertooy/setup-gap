@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.gap-version }} on ${{ matrix.os }} with ${{ matrix.configflags }}
+    name: ${{ matrix.gap-version }} on ${{ matrix.os }} with ${{ !matrix.configflags && 'system GMP' || 'built-in GMP'}}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
