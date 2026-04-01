@@ -24,13 +24,10 @@ jobs:
           - '4.11'
           - '4.10'
           - '4.9'
-        configflags: ['', '--with-gmp=builtin']
-        exclude:
-          - os: windows-latest
-            configflags: '--with-gmp=builtin'
-          - os: macos-latest
-            configflags: '--with-gmp=builtin'
+        configflags: ['']
         include:
+          - os: ubuntu-latest
+            configflags: '--with-gmp=builtin'
           - os: ubuntu-latest
             gap-version: latest
           - os: ubuntu-latest
@@ -39,6 +36,8 @@ jobs:
             gap-version: v4.11.1
           - os: ubuntu-latest
             gap-version: 4
+          - os: ubuntu-latest
+            gap-version: 4.15.0-beta1
 
     steps:
       - name: "Checkout"
