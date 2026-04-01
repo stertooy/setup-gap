@@ -16,26 +16,29 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         gap-version:
-          - v4.10
-          - v4.11.1
-          - stable-4.12
-          - v4.13.0-alpha2
-          - 4.15.0-beta1
-          - 4
-          - latest
-          - devel
-          - v4.16dev
+          - 'devel'
+          - '4.15'
+          - '4.14'
+          - '4.13'
+          - '4.12'
+          - '4.11'
+          - '4.10'
+          - '4.9'
         configflags: ['', '--with-gmp=builtin']
         exclude:
           - os: windows-latest
             configflags: '--with-gmp=builtin'
           - os: macos-latest
-            gap-version: stable-4.12
-          - os: macos-latest
-            gap-version: v4.10
-          - os: macos-latest
-            gap-version: v4.11.1
             configflags: '--with-gmp=builtin'
+        include:
+          - os: ubuntu-latest
+            gap-version: latest
+          - os: ubuntu-latest
+            gap-version: stable-4.15
+          - os: ubuntu-latest
+            gap-version: v4.11.1
+          - os: ubuntu-latest
+            gap-version: 4
 
     steps:
       - name: "Checkout"
