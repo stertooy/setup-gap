@@ -125,8 +125,6 @@ jobs:
             gap-packages/orb
             utils
       - uses: gap-actions/build-pkg@v3
-        with:
-          extra-pkgs: 'orb'
 ```
 
 ## Contact
