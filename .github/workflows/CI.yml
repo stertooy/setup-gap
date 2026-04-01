@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.gap-version }} on ${{ matrix.os }} with configflags: ${{ matrix.configflags }}
+    name: ${{ matrix.gap-version }} on ${{ matrix.os }} with ${{ matrix.configflags }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -24,9 +24,8 @@ jobs:
           - '4.11'
           - '4.10'
           - '4.9'
+        configflags: ['']
         include:
-          - os: ubuntu-latest
-            configflags: ' '
           - os: ubuntu-latest
             configflags: '--with-gmp=builtin'
           - os: ubuntu-latest
