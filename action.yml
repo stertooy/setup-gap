@@ -37,7 +37,8 @@ inputs:
     description: 'make bootstrap-pkg-? (i.e. full/minimal)'
     required: false
     default: 'REMOVED'
-
+    
+  
 runs:
   using: "composite"
   steps:
@@ -89,6 +90,8 @@ runs:
     - name: "Determine GAP version"
       id: version
       shell: bash
+      env:
+        OLDEST_VER: "4.9"
       run: |
         VERSION=""
         IS_RELEASE=true
@@ -113,11 +116,18 @@ runs:
                 # Get from capture group in regex
                 REL="${BASH_REMATCH[1]}"
                 echo "Version: obtained \"${REL}\" from PackageInfo.g"
+
+                # Replace by oldest supported version if necessary
+                REL=$(printf '%s\n' "${REL}" "${OLDEST_VER}" | sort -V | tail -n1)
               else
                 # Hard-coded minimal version supported by this action
-                REL="4.9"
+                REL="${OLDEST_VER}"
                 echo "Version: could not find in PackageInfo.g, defaulting to \"${REL}\""
               fi
+
+              
+
+              
 
               # TODO: if VERSION is now older than the minimal supported version by this action,
               # we should replace it.
