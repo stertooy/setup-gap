@@ -114,31 +114,24 @@ runs:
 
               if [[ $(cat PackageInfo.g) =~ ${REGEX} ]]; then
                 # Get from capture group in regex
-                REL="${BASH_REMATCH[1]}"
-                echo "Version: obtained \"${REL}\" from PackageInfo.g"
+                PKG_VER="${BASH_REMATCH[1]}"
+                echo "Version: PackageInfo.g contains \"${PKG_VER}\""
+
+                # Remove leading stuff is present
+                PKG_VER=${PKG_VER##*[>= ]}
 
                 # Replace by oldest supported version if necessary
-                REL=$(printf '%s\n' "${REL}" "${OLDEST_VER}" | sort -V | tail -n1)
+                REL=$(printf '%s\n' "${PKG_VER}" "${OLDEST_VER}" | sort -V | tail -n1)
+                echo "Version: turned \"${PKG_VER}\" into \"${REL}\""
               else
                 # Hard-coded minimal version supported by this action
                 REL="${OLDEST_VER}"
                 echo "Version: could not find in PackageInfo.g, defaulting to \"${REL}\""
               fi
-
-              
-
-              
-
-              # TODO: if VERSION is now older than the minimal supported version by this action,
-              # we should replace it.
             fi
 
-
-            # Remove leading stuff is present
-            REL=${REL##*[>=v ]}
-            
-            # Add "v" in front
-            REL=v${REL}
+            # Ensure a "v" is in front
+            REL=v${REL#v}
 
             if echo "$GIT_RELS" | grep -qx "$REL" ; then
               echo "Version: exact release match"
