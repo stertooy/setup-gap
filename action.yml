@@ -107,7 +107,7 @@ runs:
             REL=${{ inputs.gap-version }}
             if [[ "$REL" == "minimal" ]]; then
               # Get from PackageInfo.g
-              REGEX="\<GAP\>[[:space:]]*:=[[:space:]]*\"([^\"]*)\""
+              REGEX="GAP[[:space:]]*:=[[:space:]]*\"([^\"]*)\""
 
               if [[ $(cat PackageInfo.g) =~ ${REGEX} ]]; then
                 # Get from capture group in regex
@@ -118,7 +118,11 @@ runs:
                 REL="4.9"
                 echo "Version: could not find in PackageInfo.g, defaulting to \"${REL}\""
               fi
+
+              # TODO: if VERSION is now older than the minimal supported version by this action,
+              # we should replace it.
             fi
+
 
             # Remove leading stuff is present
             REL=${REL##*[>=v ]}
