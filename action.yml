@@ -37,8 +37,7 @@ inputs:
     description: 'make bootstrap-pkg-? (i.e. full/minimal)'
     required: false
     default: 'REMOVED'
-    
-  
+
 runs:
   using: "composite"
   steps:
