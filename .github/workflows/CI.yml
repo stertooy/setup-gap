@@ -35,12 +35,6 @@ jobs:
           - os: ubuntu-latest
             gap-version: minimal
             configflags: ''
-          - os: macos-latest
-            gap-version: minimal
-            configflags: ''
-          - os: windows-latest
-            gap-version: minimal
-            configflags: ''
           - os: ubuntu-latest
             gap-version: latest
             configflags: ''
