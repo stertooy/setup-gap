@@ -104,9 +104,25 @@ runs:
             GIT_RELS=$(cat $RUNNER_TEMP/gap_releases.json | jq -r '.[].tagName' | sort -V)
             GIT_NPRS=$(cat $RUNNER_TEMP/gap_releases.json | jq -r '.[] | select(.isPrerelease == false) | .tagName' | sort -V)
 
-            # Add "v" in front if missing
             REL=${{ inputs.gap-version }}
-            REL=v${REL#v}
+            if [[ "$REL" == "minimal" ]]; then
+              # Get from PackageInfo.g
+              REGEX="\<GAP\>[[:space:]]*:=[[:space:]]*\"([^\"]*)\""
+
+              if [[ $(cat PackageInfo.g) =~ ${REGEX} ]]; then
+                # Get from capture group in regex
+                REL="${BASH_REMATCH[1]}"
+              else
+                # Hard-coded minimal version supported by this action
+                REL="4.9"
+              fi
+            fi
+
+            # Remove leading stuff is present
+            REL=${REL##*[>=v ]}
+            
+            # Add "v" in front
+            REL=v${REL}
 
             if echo "$GIT_RELS" | grep -qx "$REL" ; then
               echo "Version: exact release match"
