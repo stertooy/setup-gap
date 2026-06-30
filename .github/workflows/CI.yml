@@ -33,6 +33,9 @@ jobs:
             configflags: '--with-gmp=builtin'
         include:
           - os: ubuntu-latest
+            gap-version: minimal
+            configflags: ''
+          - os: ubuntu-latest
             gap-version: latest
             configflags: ''
           - os: ubuntu-latest
