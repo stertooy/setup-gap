@@ -112,9 +112,11 @@ runs:
               if [[ $(cat PackageInfo.g) =~ ${REGEX} ]]; then
                 # Get from capture group in regex
                 REL="${BASH_REMATCH[1]}"
+                echo "Version: obtained \"${REL}\" from PackageInfo.g"
               else
                 # Hard-coded minimal version supported by this action
                 REL="4.9"
+                echo "Version: could not find in PackageInfo.g, defaulting to \"${REL}\""
               fi
             fi
 
