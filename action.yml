@@ -128,7 +128,7 @@ runs:
 
                 REL=$(printf '%s\n' "${PKG_VER}" "${OLDEST_VER}" | sort -V | tail -n1)
                 if [[ "${PKG_VER}" != "${REL}" ]]; then 
-                  echo "Version: ${PKG_VER} not supported by this action, using ${NEW_VER} instead"
+                  echo "Version: ${PKG_VER} not supported by this action, using ${REL} instead"
                 fi
                 
               else
