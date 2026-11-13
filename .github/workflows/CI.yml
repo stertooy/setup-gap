@@ -95,7 +95,7 @@ jobs:
           cd "$GAPROOT/pkg"
           shopt -s failglob
           for pkg in $GAP_PACKAGES_TO_BUILD; do
-            ../bin/BuildPackages.sh --strict "$pkg"*/
+            ../bin/BuildPackages.sh --strict "$pkg"?(-*)/
           done
 
           $GAP -A <<GAPINPUT
