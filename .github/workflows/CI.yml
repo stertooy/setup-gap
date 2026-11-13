@@ -93,7 +93,7 @@ jobs:
           GAP_PACKAGES_TO_BUILD: io json profiling
         run: |
           cd "$GAPROOT/pkg"
-          shopt -s failglob
+          shopt -s extglob failglob
           for pkg in $GAP_PACKAGES_TO_BUILD; do
             ../bin/BuildPackages.sh --strict "$pkg"*/
           done
