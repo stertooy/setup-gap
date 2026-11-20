@@ -51,7 +51,7 @@ jobs:
             gap-version: 4.15.0-beta1
             configflags: ''
           - os: ubuntu-latest
-            gap-version: ''
+            gap-version: 'Custom archive'
             configflags: ''
             custom-archive: >-
               https://github.com/gap-system/gap/releases/download/v4.16.1/gap-4.16.1.tar.gz
@@ -78,6 +78,7 @@ jobs:
         with:
           gap-version: ${{ matrix.gap-version }}
           configflags: ${{ matrix.configflags }}
+          custom-archive: ${{ matrix.custom-archive }}
 
       - name: "Check if GAP can run"
         shell: bash
